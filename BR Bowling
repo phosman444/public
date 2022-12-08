@@ -1,0 +1,231 @@
+public class BRBowling : MonoBehaviour
+{
+    
+    // These are comments, whenever you put // in-front of something is does not run that code, so you can write whatever you want, very important, not being sarcastic.
+    // You can also comment out code for debugging purposes, if you want to turn something off for testing purposes you can do this;
+
+    // public float testFloat;
+    
+    //Some of these variables are set inside the editor, not important functionally speaking.
+
+    public GameObject[] pins = new GameObject[10]; // The Pins, the "[]" makes this a list.
+    public Vector3[] pinLocs = new Vector3[10]; // List of XYZ values
+
+    public GameObject ball; // The Ball
+    public Vector3 ballLoc; // Empty XYZ Value
+
+    public float maxBallDistance = 150f; // Value, the max distance for the ball to be away from track.
+
+    public int currentRoundScore = 0;
+    public int[] score = new int[10]; // List of Integers, Int = No decimals, full numbers only, 10 Rounds total. Starts as Empty Values
+
+    public float hitTimer = -2; // After a ball is hit, this is the remaining amount of time until round is considered complete. We are starting it at -2 for reasons you'll see later.
+    public int currentRound = 0; // Integer representing the current bowling round
+    public bool[] hitPin = new bool[10]; // True false, On / Off, 0 1, This is a list of booleans that is set to true if it is hit by ball.
+
+    public bool gutterBallLock = false; // Used to make sure Gutterball method only runs once, don't worry about this right now.
+
+    public GameObject[] currentRoundIndicator;
+    public VisualEffect[] currentScoreNumbersX0;
+    public VisualEffect[] currentScoreNumbers0X;
+
+    // Start is the first Method called.
+    // ";" complete a code, similar to how periods complete a sentence.
+    // Brackets "{ }" determines the containment of the code. Sometimes you don't need brackets (will only run the code up until the next ";"), but for methods (Start()) you need brackets.
+
+    public void Start() //Method that runs this code when the script first runs
+    {
+
+        for (var i = 0; i < pins.Length; i++) 
+        { pinLocs[i] = pins[i].transform.position; }
+        
+        //Ok this is super important to learn. THE most important thing in coding if you're doing a big project.
+        
+        //for
+        //This is a for loop, we are running the code between the "{ pinLocs[i] = pins[i].transform.position; }" code for each pin
+        
+        // var i = 0:
+        // We are starting this for loop at 0. var is a value that is declared by another variable, in this case it is being declared by an integer(int). 
+        // var turns into an int, var is a shape-shifter.
+        
+        // i < pins.Length:
+        // As long as i is less than the length of the list of pins (10 pins in this case) keep running this for loop
+        
+        // i++:
+        // Increments i by 1. For example if i = 5, by running i++ it is 5 + 1 = 6. i is now 6.
+
+        // Then the following "{ pinLocs[i] = pins[i].transform.position; }"
+        // Remember, pinLocs are a list of empty XYZ values at this point, and we are filling each 10 pinLocs with the current position of the pins.
+        // So its doing the same thing as this:
+        
+        // pinLocs[0] = pins[0].transform.location;
+        // pinLocs[1] = pins[1].transform.location;
+        // pinLocs[2] = pins[2].transform.location;
+        // pinLocs[3] = pins[3].transform.location;
+        // pinLocs[4] = pins[4].transform.location;
+        // pinLocs[5] = pins[5].transform.location;
+        // pinLocs[6] = pins[6].transform.location;
+        // pinLocs[7] = pins[7].transform.location;
+        // pinLocs[8] = pins[8].transform.location;
+        // pinLocs[9] = pins[9].transform.location;
+        // pinLocs[10] = pins[10].transform.location;
+        
+        //For loops are not only important to make your code more readable, short and compact, it also makes things scalable, if I wanted to increase the amount of pins the for loop will always run the length of the list of pins.
+        
+        ballLoc = ball.transform.position; //Copy the current position of the bowling ball to this XYZ value, used as the starting position of the bowling ball and is not changed after this point.
+
+        ResetScoreBoard();
+    }
+
+    private void ResetScoreBoard()
+    {
+        foreach (var csn1 in currentScoreNumbersX0)
+        {
+            csn1.SetTexture("Font", CYCOEngine.cycoEngine.find.comboCounterFont[0]);
+        }
+
+        foreach (var csn2 in currentScoreNumbers0X)
+        {
+            csn2.SetTexture("Font", CYCOEngine.cycoEngine.find.comboCounterFont[0]);
+        }
+
+        foreach (var cri in currentRoundIndicator)
+        {
+            cri.SetActive(false);
+        }
+
+        currentRoundIndicator[0].SetActive(true);
+    }
+
+
+    public void FixedUpdate() // This runs the code every frame.
+    {
+
+        //RESPAWN CHECK
+        
+        // If the distance between the current ball position and the ball starting point is greater than the maximum allowed distance or if the current position of the ball is below the starting Y value (up / down) run "GutterBall()".
+        // The "||" means "Or" in an if statement, && = and, "==" equals (DO NOT USE "=", = CHANGES A VALUE). != means does not equal. > means greater than, < means less than, >= means greater than or equal, <= Less than or Equal.
+        if (Vector3.Distance(ball.transform.position, ballLoc) > maxBallDistance || ball.transform.position.y < ballLoc.y - 1f)
+        {
+            if (!gutterBallLock)
+            {
+                Gutterball(); //This calls a Method you will see later.
+                gutterBallLock = true; //Setting this to true means the Gutterball method will only bt called once.
+            }
+        }
+
+
+        // PINS HAVE BEEN HIT
+        switch (hitTimer) //Switch statements use this value (hitTimer) to determine what code to run.
+        {
+            case >= 0: //If hitTimer is greater than or equal to 0, run this code until the next "break;"
+
+                hitTimer -= Time.deltaTime; //delta time is the amount of time in seconds since the last frame, usually about 0.015 if you're running the game at 60 frames per second. hitTimer is minus by 0.015f.
+
+                break;
+
+            case < 0 and > -1: // If hitTimer is not below 0, but greater than -1, run this code. It's done this way so it only runs this once after the timer is completed.
+
+                //Another For Loop, try to figure this one out on your own. Remember, hitPin[] is a list of booleans (true / false), that are made true when they have been hit.
+                for (var i = 0; i < hitPin.Length; i++) 
+                {
+                    if (hitPin[i])
+                    {
+                        currentRoundScore++; // Increment the round score up by one. 
+                        hitPin[i] = false; // We don't need the hit status of this pin to be true anymore. Set it false for the next round
+                    }
+                }
+
+                for (var i = 0; i < pins.Length; i++)
+                {
+                    pins[i].transform.position = pinLocs[i]; // Set the pin to the respective pin start position.
+                    pins[i].transform.rotation = Quaternion.identity; // Set the rotation to default (X = 0, Y = 0, Z = 0) Local rotation is different than Global rotation. Beyond the scope of this tutorial. Important though.
+                    pins[i].GetComponent<Rigidbody>().Sleep(); // Reseting the velocity of the pin so it doesn't go flying after repositioning
+                }
+
+                if (currentRound == 10)
+                {
+                    ResetScoreBoard();
+                    currentRound = 0;
+                }
+                
+                currentScoreNumbersX0[currentRound].SetTexture("Font", CYCOEngine.cycoEngine.find.comboCounterFont[CYCOEngine.GetDecimal(currentRoundScore, 2)]);
+                currentScoreNumbers0X[currentRound].SetTexture("Font", CYCOEngine.cycoEngine.find.comboCounterFont[CYCOEngine.GetDecimal(currentRoundScore, 1)]);
+
+                score[currentRound] = currentRoundScore;
+                currentRoundScore = 0; // Set the current round score to 0 for the next round.
+                currentRound++;
+
+                foreach (var cri in currentRoundIndicator) { cri.SetActive(false); }
+                currentRoundIndicator[currentRound].SetActive(true);
+                
+                gutterBallLock = false;
+                
+                hitTimer = -2f; //Sets the hitTimer to -2 so that this code is below the > -1 threshold, this is what makes this part of the switch statement run once.
+                break;
+
+            case <= -2:
+
+                //Do nothing
+
+                //This isn't needed and can be deleted but this is just to show what the switch statement is going for.
+
+                break;
+        }
+
+        
+        //HIT PINS DETECTION
+        //Note, there is no detection for anything other than the rotation of the pins, this means the character can run or punch the pins and it still counts towards a score
+        //This is an example of leaving things open and not specifying things. I don't have the time or desire to implement detection for only if the bowling ball hits, if the user wants to cheat they are only cheating themselves.
+
+        for (var i = 0; i < pins.Length; i++)
+        {
+            
+            //Debug.Log(pins[i].transform.up.y); // Being able to display the value to a console is extremely important debugging, in this case this value was giving me an Issue so I wanted to see what it was outputting
+                                               // Extremely important but out of scope for this.
+
+            if(pins[i].transform.up.y < 0.9f) //Checking if the absolute sum (If negative, makes the value positive) of each pin's rotation X/Z values equal above 10, then it tipped over
+            {
+                if (!hitPin[i]) hitTimer = 3f; //Checking if hitPin[i] is false or not means it will only run once if made true. The order of execution is important as you see below it is set to true.
+                hitPin[i] = true; //If these two pieces of code where switched the hitPin would be set to true and the hit timer would not be set to 5. Order is important. Runs from the top to the bottom.
+            }
+        }
+    }
+    
+    private void Gutterball()
+    {
+        
+        //Moves the balls position (XYZ) = the balls starting position.
+        ball.transform.position = ballLoc;
+            
+        // This resets the velocity of the bowling ball so that it doesn't go flying off when it respawns.
+        ball.GetComponent<Rigidbody>().Sleep();
+        
+        //Checking if any pins where hit, if not, the current round score is set to 0.
+        bool hitCheck = false; // You can make variables anywhere in a code, even inside of a method. Sets it to false before running the below for loop.
+        
+        for (var i = 0; i < pins.Length; i++)
+        {
+            if (hitPin[i]) hitCheck = true; //Here you can see me run code without brackets "{ }" Runs only until the next ";" I personally don't like to do this, but some do. Based on preference.
+        }
+
+        if (!hitCheck) // Here none of the pins where hit, since in the above for loop none of the pins returns a hit.
+                       // ! means if (hitCheck == false), conversely you can use if (hitCheck) to check if it's true.
+        {
+            
+            //Same code from the switch statement above other than making the current score for the round 0.
+            
+            currentScoreNumbersX0[currentRound].SetTexture("Font", CYCOEngine.cycoEngine.find.comboCounterFont[0]);
+            currentScoreNumbers0X[currentRound].SetTexture("Font", CYCOEngine.cycoEngine.find.comboCounterFont[0]);
+            
+            score[currentRound] = 0;
+            currentRoundScore = 0;  
+            currentRound++;
+            
+            foreach (var cri in currentRoundIndicator) { cri.SetActive(false); }
+            currentRoundIndicator[currentRound].SetActive(true);
+        }
+
+        gutterBallLock = false; //Enables the method to be called again.
+    }
+}
